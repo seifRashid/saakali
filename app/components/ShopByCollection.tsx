@@ -52,8 +52,17 @@ export default function ShopByCollection() {
     const inView = useInView(ref, { once: true, margin: "-80px" });
 
     return (
-        <section id="collections" className="section-padding relative">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <section id="collections" className="section-padding relative overflow-hidden">
+            {/* Subtle Gradient Background */}
+            <div
+                className="absolute inset-0 opacity-20"
+                style={{
+                    backgroundImage:
+                        "radial-gradient(circle at 80% 20%, rgba(201,168,76,0.1) 0%, transparent 40%)",
+                }}
+            />
+
+            <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 relative z-10">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}

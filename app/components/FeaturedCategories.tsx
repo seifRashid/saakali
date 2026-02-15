@@ -41,7 +41,7 @@ export default function FeaturedCategories() {
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
 
-            <div ref={ref} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div ref={ref} className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}

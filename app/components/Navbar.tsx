@@ -29,11 +29,11 @@ export default function Navbar() {
                 animate={{ y: 0 }}
                 transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
                 className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled
-                        ? "glass shadow-lg shadow-black/20"
-                        : "bg-transparent"
+                    ? "glass shadow-lg shadow-black/20"
+                    : "bg-transparent"
                     }`}
             >
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-20 items-center justify-between">
                         {/* Logo */}
                         <a href="#" className="flex items-center gap-2 group">
