@@ -1,9 +1,43 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ShoppingBag, Gem, Shield, Truck, Award } from "lucide-react";
 
 export default function HeroSection() {
+    const [time, setTime] = useState<Date | null>(null);
+
+    useEffect(() => {
+        setTime(new Date());
+        const interval = setInterval(() => {
+            setTime(new Date());
+        }, 1000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // Default static time (10:10:30) for server/initial render
+    const displayTime = time || new Date("2024-01-01T10:10:30");
+
+    const seconds = displayTime.getSeconds();
+    const minutes = displayTime.getMinutes();
+    const hours = displayTime.getHours();
+
+    const secondAngle = seconds * 6;
+    const minuteAngle = minutes * 6 + seconds * 0.1;
+    const hourAngle = (hours % 12) * 30 + minutes * 0.5;
+
+    const getHandCoords = (angle: number, length: number) => {
+        const rad = (angle - 90) * (Math.PI / 180);
+        return {
+            x2: 200 + length * Math.cos(rad),
+            y2: 200 + length * Math.sin(rad),
+        };
+    };
+
+    const hourCoords = getHandCoords(hourAngle, 60);
+    const minuteCoords = getHandCoords(minuteAngle, 85); // Increased length slightly for elegance
+    const secondCoords = getHandCoords(secondAngle, 90); // Long sweep
+
     return (
         <section
             id="hero"
@@ -27,11 +61,13 @@ export default function HeroSection() {
             />
             {/* Animated grid pattern */}
             <div
-                className="absolute inset-0 opacity-[0.03]"
+                className="absolute inset-0 opacity-[0.08]"
                 style={{
                     backgroundImage:
                         "linear-gradient(var(--gold) 1px, transparent 1px), linear-gradient(90deg, var(--gold) 1px, transparent 1px)",
                     backgroundSize: "80px 80px",
+                    maskImage: "radial-gradient(ellipse at center, black 30%, transparent 70%)",
+                    WebkitMaskImage: "radial-gradient(ellipse at center, black 30%, transparent 70%)",
                 }}
             />
 
@@ -90,12 +126,27 @@ export default function HeroSection() {
                                     />
                                 );
                             })}
+
                             {/* Hour hand */}
-                            <line x1="200" y1="200" x2="200" y2="140" stroke="#c9a84c" strokeWidth="4" strokeLinecap="round" />
+                            <motion.line
+                                x1="200" y1="200"
+                                animate={{ x2: hourCoords.x2, y2: hourCoords.y2 }}
+                                stroke="#c9a84c" strokeWidth="4" strokeLinecap="round"
+                            />
                             {/* Minute hand */}
-                            <line x1="200" y1="200" x2="250" y2="200" stroke="#e0c76f" strokeWidth="2.5" strokeLinecap="round" />
+                            <motion.line
+                                x1="200" y1="200"
+                                animate={{ x2: minuteCoords.x2, y2: minuteCoords.y2 }}
+                                stroke="#e0c76f" strokeWidth="2.5" strokeLinecap="round"
+                            />
                             {/* Second hand */}
-                            <line x1="200" y1="200" x2="200" y2="120" stroke="#c9a84c" strokeWidth="1" strokeLinecap="round" opacity="0.6" />
+                            <motion.line
+                                x1="200" y1="200"
+                                animate={{ x2: secondCoords.x2, y2: secondCoords.y2 }}
+                                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                                stroke="#c9a84c" strokeWidth="1" strokeLinecap="round" opacity="0.8"
+                            />
+
                             {/* Center dot */}
                             <circle cx="200" cy="200" r="6" fill="#c9a84c" />
                             <circle cx="200" cy="200" r="3" fill="#111" />
