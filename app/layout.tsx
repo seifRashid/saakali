@@ -36,6 +36,7 @@ export const metadata: Metadata = {
 import { CartProvider } from "./context/CartContext";
 import CartDrawer from "./components/Shop/CartDrawer";
 import ToastContainer from "./components/ToastContainer";
+import { ThemeProvider } from "./components/ThemeProvider";
 
 export default function RootLayout({
   children,
@@ -43,15 +44,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${playfair.variable} ${inter.variable} antialiased`}
       >
-        <CartProvider>
-          {children}
-          <CartDrawer />
-          <ToastContainer />
-        </CartProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange={false}
+        >
+          <CartProvider>
+            {children}
+            <CartDrawer />
+            <ToastContainer />
+          </CartProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

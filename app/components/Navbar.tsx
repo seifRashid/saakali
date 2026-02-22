@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Watch, ShoppingBag } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import ThemeToggle from "./ThemeToggle";
 
 const navLinks = [
     { label: "Shop", href: "/shop" },
@@ -31,7 +32,7 @@ export default function Navbar() {
                 animate={{ y: 0 }}
                 transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
                 className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled
-                    ? "glass shadow-lg shadow-black/20"
+                    ? "glass shadow-lg shadow-black/10"
                     : "bg-transparent"
                     }`}
             >
@@ -59,8 +60,8 @@ export default function Navbar() {
                             ))}
                         </div>
 
-                        {/* CTA + Mobile Toggle */}
-                        <div className="flex items-center gap-4">
+                        {/* CTA + Theme Toggle + Mobile Toggle */}
+                        <div className="flex items-center gap-3">
                             <button
                                 onClick={() => setIsCartOpen(true)}
                                 className="relative p-2 text-text-secondary hover:text-gold transition-colors"
@@ -77,6 +78,7 @@ export default function Navbar() {
                                     </motion.span>
                                 )}
                             </button>
+                            <ThemeToggle />
                             <a
                                 href="/shop"
                                 className="hidden sm:inline-flex btn-primary !py-2 !px-6 text-sm"
