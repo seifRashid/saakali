@@ -3,18 +3,20 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Watch, ShoppingBag } from "lucide-react";
+import { useCart } from "../context/CartContext";
 
 const navLinks = [
-    { label: "Collections", href: "#collections" },
-    { label: "Categories", href: "#categories" },
-    { label: "Best Sellers", href: "#bestsellers" },
-    { label: "Luxury", href: "#luxury" },
-    { label: "About", href: "#about" },
+    { label: "Shop", href: "/shop" },
+    { label: "Collections", href: "/#collections" },
+    { label: "Categories", href: "/#categories" },
+    { label: "Best Sellers", href: "/#bestsellers" },
+    { label: "Luxury", href: "/#luxury" },
 ];
 
 export default function Navbar() {
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
+    const { cartCount, setIsCartOpen } = useCart();
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -36,7 +38,7 @@ export default function Navbar() {
                 <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-20 items-center justify-between">
                         {/* Logo */}
-                        <a href="#" className="flex items-center gap-2 group">
+                        <a href="/" className="flex items-center gap-2 group">
                             <Watch className="w-7 h-7 text-gold transition-transform duration-500 group-hover:rotate-12" />
                             <span className="text-2xl font-bold tracking-widest font-[family-name:var(--font-heading)]">
                                 <span className="gold-gradient-text">SAAKALI</span>
@@ -59,11 +61,26 @@ export default function Navbar() {
 
                         {/* CTA + Mobile Toggle */}
                         <div className="flex items-center gap-4">
-                            <a
-                                href="#bestsellers"
-                                className="hidden sm:inline-flex btn-primary !py-2.5 !px-6 text-sm"
+                            <button
+                                onClick={() => setIsCartOpen(true)}
+                                className="relative p-2 text-text-secondary hover:text-gold transition-colors"
+                                aria-label="Open cart"
                             >
-                                <ShoppingBag className="w-4 h-4" />
+                                <ShoppingBag className="w-6 h-6" />
+                                {cartCount > 0 && (
+                                    <motion.span
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        className="absolute top-0 right-0 w-5 h-5 bg-gold text-bg-primary text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-bg-primary"
+                                    >
+                                        {cartCount}
+                                    </motion.span>
+                                )}
+                            </button>
+                            <a
+                                href="/shop"
+                                className="hidden sm:inline-flex btn-primary !py-2 !px-6 text-sm"
+                            >
                                 Shop Now
                             </a>
                             <button
@@ -103,7 +120,7 @@ export default function Navbar() {
                                 </motion.a>
                             ))}
                             <a
-                                href="#bestsellers"
+                                href="/shop"
                                 onClick={() => setMobileOpen(false)}
                                 className="btn-primary mt-4"
                             >

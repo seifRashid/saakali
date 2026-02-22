@@ -3,69 +3,13 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { ArrowRight, Star, ShoppingCart } from "lucide-react";
+import { useCart } from "../context/CartContext";
 
-const products = [
-    {
-        name: "Sovereign Chrono",
-        price: "$349",
-        originalPrice: "$429",
-        badge: "Best Seller",
-        badgeColor: "#c9a84c",
-        rating: 4.9,
-        reviews: 234,
-        category: "Men's Luxury",
-    },
-    {
-        name: "Eclipse Rose",
-        price: "$289",
-        originalPrice: "$359",
-        badge: "New Arrival",
-        badgeColor: "#e0c76f",
-        rating: 4.8,
-        reviews: 156,
-        category: "Women's Elegant",
-    },
-    {
-        name: "Titanium Pro X",
-        price: "$399",
-        originalPrice: "$499",
-        badge: "Limited Edition",
-        badgeColor: "#ef4444",
-        rating: 5.0,
-        reviews: 89,
-        category: "Sports",
-    },
-    {
-        name: "Heritage Gold",
-        price: "$449",
-        originalPrice: null,
-        badge: "Best Seller",
-        badgeColor: "#c9a84c",
-        rating: 4.9,
-        reviews: 312,
-        category: "Men's Classic",
-    },
-    {
-        name: "Aria Diamond",
-        price: "$329",
-        originalPrice: "$399",
-        badge: "Trending",
-        badgeColor: "#a78bfa",
-        rating: 4.7,
-        reviews: 198,
-        category: "Women's Luxury",
-    },
-    {
-        name: "Explorer Scout",
-        price: "$179",
-        originalPrice: "$229",
-        badge: "Popular",
-        badgeColor: "#4ade80",
-        rating: 4.6,
-        reviews: 267,
-        category: "Kids",
-    },
-];
+import { Product } from "../data/products";
+
+interface BestSellersProps {
+    products: Product[];
+}
 
 // SVG watch face illustrations for each product
 function WatchIllustration({ index }: { index: number }) {
@@ -103,7 +47,8 @@ function WatchIllustration({ index }: { index: number }) {
     );
 }
 
-export default function BestSellers() {
+export default function BestSellers({ products }: BestSellersProps) {
+    const { addToCart } = useCart();
     const ref = useRef(null);
     const inView = useInView(ref, { once: true, margin: "-80px" });
 
@@ -134,7 +79,7 @@ export default function BestSellers() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-16">
                     {products.map((product, i) => (
                         <motion.div
-                            key={product.name}
+                            key={product.id || product.name}
                             initial={{ opacity: 0, y: 40 }}
                             animate={inView ? { opacity: 1, y: 0 } : {}}
                             transition={{ delay: i * 0.1, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
@@ -151,12 +96,15 @@ export default function BestSellers() {
                             {/* Product image area */}
                             <div className="relative h-52 sm:h-56 bg-gradient-to-b from-bg-elevated to-bg-card flex items-center justify-center overflow-hidden">
                                 <div className="w-32 h-44 sm:w-36 sm:h-48 group-hover:scale-105 transition-transform duration-700">
-                                    <WatchIllustration index={i} />
+                                    <WatchIllustration index={product.id.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0)} />
                                 </div>
 
                                 {/* Quick add overlay */}
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                                    <button className="btn-primary !py-2.5 !px-5 text-sm transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                                    <button
+                                        onClick={() => addToCart(product)}
+                                        className="btn-primary !py-2.5 !px-5 text-sm transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300"
+                                    >
                                         <ShoppingCart className="w-4 h-4" />
                                         Quick Add
                                     </button>
@@ -182,16 +130,16 @@ export default function BestSellers() {
                                         />
                                     ))}
                                     <span className="text-xs text-text-muted ml-1">
-                                        ({product.reviews})
+                                        ({product.reviewsCount})
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className="text-lg font-bold gold-gradient-text">
-                                        {product.price}
+                                        ${product.price}
                                     </span>
                                     {product.originalPrice && (
                                         <span className="text-sm text-text-muted line-through">
-                                            {product.originalPrice}
+                                            ${product.originalPrice}
                                         </span>
                                     )}
                                 </div>
@@ -207,7 +155,7 @@ export default function BestSellers() {
                     transition={{ delay: 0.8, duration: 0.6 }}
                     className="text-center mt-12"
                 >
-                    <a href="#" className="btn-secondary">
+                    <a href="/shop" className="btn-secondary">
                         View All Watches
                         <ArrowRight className="w-4 h-4" />
                     </a>

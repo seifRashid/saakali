@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Navbar from "./components/Navbar";
 import HeroSection from "./components/HeroSection";
 import BrandStory from "./components/BrandStory";
@@ -9,8 +11,14 @@ import LuxuryHighlight from "./components/LuxuryHighlight";
 import Testimonials from "./components/Testimonials";
 import Newsletter from "./components/Newsletter";
 import Footer from "./components/Footer";
+import { getProducts, getCategories } from "../lib/db/queries";
 
-export default function Home() {
+export default async function Home() {
+  const [products, categories] = await Promise.all([
+    getProducts(),
+    getCategories()
+  ]);
+
   return (
     <>
       <Navbar />
@@ -18,9 +26,9 @@ export default function Home() {
         <HeroSection />
         <BrandStory />
         <ShopByCollection />
-        <FeaturedCategories />
+        <FeaturedCategories categories={categories} />
         <WhySaakali />
-        <BestSellers />
+        <BestSellers products={products.slice(0, 6) as any} />
         <LuxuryHighlight />
         <Testimonials />
         <Newsletter />

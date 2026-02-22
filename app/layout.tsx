@@ -33,6 +33,10 @@ export const metadata: Metadata = {
   ],
 };
 
+import { CartProvider } from "./context/CartContext";
+import CartDrawer from "./components/Shop/CartDrawer";
+import ToastContainer from "./components/ToastContainer";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -43,7 +47,11 @@ export default function RootLayout({
       <body
         className={`${playfair.variable} ${inter.variable} antialiased`}
       >
-        {children}
+        <CartProvider>
+          {children}
+          <CartDrawer />
+          <ToastContainer />
+        </CartProvider>
       </body>
     </html>
   );
