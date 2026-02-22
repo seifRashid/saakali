@@ -4,6 +4,8 @@ import { relations } from "drizzle-orm";
 export const productTypeEnum = pgEnum("product_type", ["Analogue", "Digital", "Quartz", "Automatic"]);
 export const materialEnum = pgEnum("material", ["Leather", "Stainless Steel", "Silicone", "Titanium"]);
 export const genderEnum = pgEnum("gender", ["Men", "Women", "Unisex", "Kids"]);
+export const userRoleEnum = pgEnum("user_role", ["ADMIN", "CUSTOMER"]);
+export const categoryStatusEnum = pgEnum("category_status", ["ACTIVE", "INACTIVE"]);
 export const orderStatusEnum = pgEnum("order_status", ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"]);
 
 export const categories = pgTable("categories", {
@@ -11,6 +13,7 @@ export const categories = pgTable("categories", {
   name: text("name").notNull().unique(),
   description: text("description"),
   image: text("image"),
+  status: categoryStatusEnum("status").default("ACTIVE").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -20,6 +23,7 @@ export const products = pgTable("products", {
   name: text("name").notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   originalPrice: decimal("original_price", { precision: 10, scale: 2 }),
+  discountPrice: decimal("discount_price", { precision: 10, scale: 2 }),
   categoryId: uuid("category_id").references(() => categories.id).notNull(),
   type: productTypeEnum("type").notNull(),
   material: materialEnum("material").notNull(),
@@ -29,6 +33,7 @@ export const products = pgTable("products", {
   badgeColor: text("badge_color"),
   rating: decimal("rating", { precision: 3, scale: 2 }).default("0").notNull(),
   reviewsCount: integer("reviews_count").default(0).notNull(),
+  stockQuantity: integer("stock_quantity").default(0).notNull(),
   inStock: boolean("in_stock").default(true).notNull(),
   description: text("description").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -47,6 +52,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   name: text("name"),
   password: text("password"),
+  role: userRoleEnum("role").default("CUSTOMER").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

@@ -7,22 +7,7 @@ import ProductCard from "../components/Shop/ProductCard";
 import FilterSidebar from "../components/Shop/FilterSidebar";
 import QuickView from "../components/Shop/QuickView";
 
-interface Product {
-    id: string;
-    name: string;
-    price: number;
-    originalPrice?: number;
-    category: string;
-    type: string;
-    material: string;
-    gender: string;
-    badge?: string;
-    badgeColor?: string;
-    rating: number;
-    reviewsCount?: number;
-    inStock: boolean;
-    description: string;
-}
+import { Product } from "../../lib/types";
 
 interface ShopClientProps {
     initialProducts: any[];

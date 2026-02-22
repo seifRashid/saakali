@@ -1,6 +1,12 @@
 import { db } from "./index";
-import { products, categories, productImages, carts, cartItems } from "./schema";
-import { eq, and, gte, lte, ilike, or } from "drizzle-orm";
+import { products, categories, productImages, carts, cartItems, users, orders, orderItems } from "./schema";
+import { eq, and, gte, lte, ilike, or, count, sum, desc } from "drizzle-orm";
+
+export async function getUserByEmail(email: string) {
+  return await db.query.users.findFirst({
+    where: eq(users.email, email),
+  });
+}
 
 export async function getProducts() {
   const allProducts = await db.query.products.findMany({
@@ -110,4 +116,68 @@ export async function updateCartItemQuantityDb(userId: string, productId: string
     .set({ quantity })
     .where(and(eq(cartItems.cartId, cartCenter.id), eq(cartItems.productId, productId)))
     .returning();
+}
+
+export async function getDashboardStats() {
+  const [productsCount] = await db.select({ count: count() }).from(products);
+  const [ordersCount] = await db.select({ count: count() }).from(orders);
+  const [totalRevenue] = await db.select({ sum: sum(orders.total) }).from(orders);
+  const [lowStockCount] = await db.select({ count: count() }).from(products).where(eq(products.stockQuantity, 0)); // Or threshold < 10
+  const [pendingOrdersCount] = await db.select({ count: count() }).from(orders).where(eq(orders.status, "PENDING"));
+
+  return {
+    totalProducts: productsCount.count,
+    totalOrders: ordersCount.count,
+    totalRevenue: Number(totalRevenue.sum || 0),
+    lowStockCount: lowStockCount.count,
+    pendingOrdersCount: pendingOrdersCount.count,
+  };
+}
+
+export async function getRecentOrders(limit: number = 5) {
+  return await db.query.orders.findMany({
+    limit,
+    orderBy: desc(orders.createdAt),
+    with: {
+      user: true,
+      items: {
+        with: {
+          product: true,
+        }
+      }
+    }
+  });
+}
+
+export async function getUsers() {
+  return await db.query.users.findMany({
+    orderBy: desc(users.createdAt),
+  });
+}
+
+export async function getRevenueAnalytics(days = 7) {
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+
+  const stats = await db.select({
+    date: orders.createdAt,
+    revenue: sum(orders.total),
+  })
+  .from(orders)
+  .where(gte(orders.createdAt, startDate))
+  .groupBy(orders.createdAt)
+  .orderBy(orders.createdAt);
+
+  // Group by date and format for chart
+  const dailyRevenue: Record<string, number> = {};
+  
+  stats.forEach(s => {
+    const dateStr = new Date(s.date).toLocaleDateString(undefined, { weekday: 'short' });
+    dailyRevenue[dateStr] = (dailyRevenue[dateStr] || 0) + Number(s.revenue || 0);
+  });
+
+  return Object.entries(dailyRevenue).map(([name, revenue]) => ({
+    name,
+    revenue
+  }));
 }

@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ShoppingCart, Eye, Star } from "lucide-react";
-import { Product } from "../../data/products";
+import { Product } from "../../../lib/types";
 import { useCart } from "../../context/CartContext";
 
 interface ProductCardProps {
@@ -34,7 +34,7 @@ export default function ProductCard({ product, index, onQuickView }: ProductCard
             {/* Image Area */}
             <div className="relative h-64 bg-gradient-to-b from-bg-elevated to-bg-card flex items-center justify-center p-8 overflow-hidden">
                 <div className="w-full h-full transform group-hover:scale-110 transition-transform duration-700 ease-out">
-                    <WatchIllustration index={product.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)} />
+                    <WatchIllustration index={product.id.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0)} />
                 </div>
 
                 {/* Overlays */}

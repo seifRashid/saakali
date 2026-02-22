@@ -1,173 +1,133 @@
-import { db } from "./index";
-import { categories, products, productImages, users } from "./schema";
 import * as dotenv from "dotenv";
-
 dotenv.config();
 
+import { db } from "./index";
+import { categories, products, productImages, users, carts, cartItems, orders, orderItems, reviews } from "./schema";
+import bcrypt from "bcryptjs";
+import { faker } from "@faker-js/faker";
+import { eq } from "drizzle-orm";
+
 async function main() {
-  console.log("Seeding database script started...");
-  console.log("DATABASE_URL present:", !!process.env.DATABASE_URL);
+  console.log("🚀 Starting Watch-Domain High-Fidelity Seeding...");
   
-  if (!process.env.DATABASE_URL) {
-    console.error("Error: DATABASE_URL is missing!");
-    return;
+  try {
+    console.log("🧹 Clearing existing data...");
+    await db.delete(orderItems);
+    await db.delete(orders);
+    await db.delete(reviews);
+    await db.delete(productImages);
+    await db.delete(cartItems);
+    await db.delete(carts);
+    await db.delete(products);
+    await db.delete(categories);
+    await db.delete(users);
+
+    console.log("📦 Creating watch categories...");
+    const categoryNames = ["Luxury", "Sport", "Classic", "Kids"];
+    const createdCategories = await db.insert(categories).values(
+      categoryNames.map(name => ({ name }))
+    ).returning();
+
+    const getCatId = (name: string) => createdCategories.find(c => c.name === name)!.id;
+
+    console.log("⌚ Creating 60 high-fidelity watch products...");
+    const watchBrands = ["Rolex", "Omega", "Seiko", "Casio", "Tag Heuer", "Patek Philippe", "Audemars Piguet", "Tissot", "Citizen", "Fossil"];
+    const watchModels = ["Chronograph", "Diver", "Master", "Classic", "Pro", "Heritage", "Precision", "Navigator", "Explorer", "Skyline"];
+    
+    const types = ["Analogue", "Digital", "Quartz", "Automatic"] as const;
+    const genders = ["Men", "Women", "Unisex", "Kids"] as const;
+    const materials = ["Leather", "Stainless Steel", "Silicone", "Titanium"] as const;
+
+    const productValues: any[] = [];
+
+    for (let i = 0; i < 60; i++) {
+        const brand = faker.helpers.arrayElement(watchBrands);
+        const model = faker.helpers.arrayElement(watchModels);
+        const name = `${brand} ${model} ${faker.string.alphanumeric(4).toUpperCase()}`;
+        
+        let category = faker.helpers.arrayElement(categoryNames);
+        let gender = faker.helpers.arrayElement(genders);
+        let type = faker.helpers.arrayElement(types);
+        
+        // Logical overrides for consistency
+        if (category === "Kids") {
+            gender = "Kids";
+            type = faker.helpers.arrayElement(["Digital", "Quartz"]);
+        }
+
+        const price = category === "Luxury" 
+            ? faker.number.int({ min: 1200, max: 15000 }) 
+            : category === "Sport" 
+                ? faker.number.int({ min: 100, max: 800 })
+                : faker.number.int({ min: 50, max: 500 });
+
+        productValues.push({
+            name,
+            price: price.toString(),
+            originalPrice: (price * 1.2).toString(),
+            categoryId: getCatId(category),
+            type,
+            material: faker.helpers.arrayElement(materials),
+            strap: faker.helpers.arrayElement(["Leather Strap", "Oyster Braclet", "Rubber Strap", "NATO Strap", "Mesh Band"]),
+            gender,
+            badge: i % 5 === 0 ? "New Arrival" : i % 8 === 0 ? "Best Seller" : i % 12 === 0 ? "Limited Edition" : null,
+            badgeColor: i % 5 === 0 ? "bg-blue-500" : i % 8 === 0 ? "bg-gold" : i % 12 === 0 ? "bg-red-500" : null,
+            stockQuantity: faker.number.int({ min: 0, max: 100 }),
+            rating: faker.number.float({ min: 3.5, max: 5, fractionDigits: 1 }).toString(),
+            reviewsCount: faker.number.int({ min: 0, max: 500 }),
+            description: `Experience the pinnacle of timekeeping with the ${name}. This exquisite piece combines ${faker.helpers.arrayElement(["traditional craftsmanship", "cutting-edge technology", "timeless design"])} with rugged durability. Features ${faker.helpers.arrayElement(["water resistance up to 100m", "sapphire crystal glass", "luminous hands", "perpetual calendar"])}.`,
+            inStock: true,
+        });
+    }
+
+    const createdProducts = await db.insert(products).values(productValues).returning();
+
+    console.log("👤 Creating admin and customers...");
+    const adminPassword = await bcrypt.hash("admin123", 10);
+    const adminUser = await db.insert(users).values({
+      email: "admin@saakali.com",
+      name: "Admin User",
+      password: adminPassword,
+      role: "ADMIN",
+    }).returning();
+
+    const customers = await db.insert(users).values(
+      Array.from({ length: 15 }).map(() => ({
+        email: faker.internet.email().toLowerCase(),
+        name: faker.person.fullName(),
+        role: "CUSTOMER" as const,
+      }))
+    ).returning();
+
+    console.log("🛒 Generating 100 historical orders...");
+    for (let i = 0; i < 100; i++) {
+        const customer = faker.helpers.arrayElement(customers);
+        const orderProducts = faker.helpers.arrayElements(createdProducts, { min: 1, max: 3 });
+        
+        const total = orderProducts.reduce((sum, p) => sum + Number(p.price), 0);
+        const [order] = await db.insert(orders).values({
+            userId: customer.id,
+            total: total.toString(),
+            status: faker.helpers.arrayElement(["DELIVERED", "SHIPPED", "PROCESSING", "PENDING"]),
+            createdAt: faker.date.recent({ days: 30 }),
+        }).returning();
+
+        for (const p of orderProducts) {
+            await db.insert(orderItems).values({
+                orderId: order.id,
+                productId: p.id,
+                quantity: 1,
+                price: p.price,
+            });
+        }
+        
+        if (i % 20 === 0) console.log(`   Processed ${i} orders...`);
+    }
+
+    console.log("✅ Watch-Domain Seeding Complete!");
+  } catch (error) {
+    console.error("❌ Fatal Seeding Error:", error);
   }
-
-  console.log("Attempting to connect and insert categories...");
-  const categoryData = [
-    { name: "Luxury", description: "Premium timepieces for sophisticated tastes", image: "/categories/luxury.jpg" },
-    { name: "Sport", description: "Durable and performance-oriented watches", image: "/categories/sport.jpg" },
-    { name: "Kids", description: "Fun and rugged watches for young explorers", image: "/categories/kids.jpg" },
-    { name: "Vintage", description: "Timeless classics with a story", image: "/categories/vintage.jpg" },
-    { name: "Diving", description: "Professional grade water-resistant watches", image: "/categories/diving.jpg" },
-  ];
-
-  const createdCategories = await db.insert(categories).values(categoryData).returning();
-  console.log(`Created ${createdCategories.length} categories.`);
-
-  // 2. Create Products
-  const productData = [
-    {
-      name: "Sovereign Chrono",
-      price: "349.00",
-      originalPrice: "429.00",
-      categoryId: createdCategories.find(c => c.name === "Luxury")?.id!,
-      type: "Quartz" as const,
-      material: "Stainless Steel" as const,
-      strap: "Steel Link",
-      gender: "Men" as const,
-      badge: "Best Seller",
-      badgeColor: "#c9a84c",
-      rating: "4.9",
-      reviewsCount: 234,
-      inStock: true,
-      description: "A statement of power and precision. The Sovereign Chrono features a brushed stainless steel case and a high-precision quartz movement.",
-    },
-    {
-      name: "Eclipse Rose",
-      price: "289.00",
-      originalPrice: "359.00",
-      categoryId: createdCategories.find(c => c.name === "Luxury")?.id!,
-      type: "Analogue" as const,
-      material: "Leather" as const,
-      strap: "Genuine Leather",
-      gender: "Women" as const,
-      badge: "New Arrival",
-      badgeColor: "#e0c76f",
-      rating: "4.8",
-      reviewsCount: 156,
-      inStock: true,
-      description: "Elegant rose gold accents paired with a deep midnight dial. The Eclipse Rose is the perfect companion for sophisticated evenings.",
-    },
-    {
-      name: "Titanium Pro X",
-      price: "399.00",
-      originalPrice: "499.00",
-      categoryId: createdCategories.find(c => c.name === "Sport")?.id!,
-      type: "Digital" as const,
-      material: "Titanium" as const,
-      strap: "Sport Silicon",
-      gender: "Men" as const,
-      badge: "Limited Edition",
-      badgeColor: "#ef4444",
-      rating: "5.0",
-      reviewsCount: 89,
-      inStock: true,
-      description: "Built for the extremes. The Titanium Pro X features a lightweight yet indestructible titanium shell and advanced digital tracking.",
-    },
-    {
-      name: "Heritage Gold",
-      price: "449.00",
-      categoryId: createdCategories.find(c => c.name === "Luxury")?.id!,
-      type: "Automatic" as const,
-      material: "Stainless Steel" as const,
-      strap: "Gold Plated",
-      gender: "Men" as const,
-      badge: "Best Seller",
-      badgeColor: "#c9a84c",
-      rating: "4.9",
-      reviewsCount: 312,
-      inStock: true,
-      description: "A tribute to classic watchmaking. The Heritage Gold features a self-winding automatic movement visible through the exhibition case back.",
-    },
-    {
-      name: "Aria Diamond",
-      price: "329.00",
-      originalPrice: "399.00",
-      categoryId: createdCategories.find(c => c.name === "Luxury")?.id!,
-      type: "Analogue" as const,
-      material: "Stainless Steel" as const,
-      strap: "Mesh Band",
-      gender: "Women" as const,
-      badge: "Trending",
-      badgeColor: "#a78bfa",
-      rating: "4.7",
-      reviewsCount: 198,
-      inStock: true,
-      description: "Minimalist design elevated with a single genuine diamond at the 12 o'clock position. Airy, lightweight, and undeniably premium.",
-    },
-    {
-      name: "Explorer Scout",
-      price: "179.00",
-      originalPrice: "229.00",
-      categoryId: createdCategories.find(c => c.name === "Kids")?.id!,
-      type: "Digital" as const,
-      material: "Silicone" as const,
-      strap: "Soft Silicone",
-      gender: "Kids" as const,
-      badge: "Popular",
-      badgeColor: "#4ade80",
-      rating: "4.6",
-      reviewsCount: 267,
-      inStock: true,
-      description: "Durable, waterproof, and fun. The Explorer Scout is designed to withstand the adventures of the youngest timekeepers.",
-    },
-    {
-      name: "Stealth Ops",
-      price: "259.00",
-      categoryId: createdCategories.find(c => c.name === "Sport")?.id!,
-      type: "Digital" as const,
-      material: "Silicone" as const,
-      strap: "Tactical Rubber",
-      gender: "Men" as const,
-      rating: "4.5",
-      reviewsCount: 112,
-      inStock: true,
-      description: "Matte black finish for a low-profile look. Features world time, stopwatch, and a high-intensity backlight.",
-    },
-    {
-      name: "Marina Deep-Sea",
-      price: "599.00",
-      categoryId: createdCategories.find(c => c.name === "Sport")?.id!,
-      type: "Automatic" as const,
-      material: "Stainless Steel" as const,
-      strap: "Diver Extension",
-      gender: "Men" as const,
-      badge: "Pro",
-      badgeColor: "#3b82f6",
-      rating: "4.9",
-      reviewsCount: 45,
-      inStock: false,
-      description: "Water resistant up to 300 meters. A professional diving watch with a unidirectional rotating bezel and sapphire crystal.",
-    },
-  ];
-
-  const createdProducts = await db.insert(products).values(productData).returning();
-  console.log(`Created ${createdProducts.length} products.`);
-
-  // 3. Create Test User
-  const testUser = await db.insert(users).values({
-    email: "test@saakali.com",
-    name: "Test User",
-    password: "hashedpassword123", // In a real app, use bcrypt
-  }).returning();
-  console.log(`Created test user: ${testUser[0].email}`);
-
-  console.log("Seeding completed successfully.");
 }
 
-main().catch((err) => {
-  console.error("Seeding failed:");
-  console.error(err);
-  process.exit(1);
-});
+main();

@@ -5,7 +5,7 @@ import { useRef } from "react";
 import { ArrowRight, Star, ShoppingCart } from "lucide-react";
 import { useCart } from "../context/CartContext";
 
-import { Product } from "../data/products";
+import { Product } from "../../lib/types";
 
 interface BestSellersProps {
     products: Product[];

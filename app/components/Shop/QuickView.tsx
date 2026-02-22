@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ShoppingBag, Star, Shield, Truck, Award } from "lucide-react";
-import { Product } from "../../data/products";
+import { Product } from "../../../lib/types";
 import { useCart } from "../../context/CartContext";
 
 interface QuickViewProps {
